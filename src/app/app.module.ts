@@ -1,18 +1,23 @@
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatCommonModule } from '@angular/material/core';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { HttpInterceptorService } from './services/http-interceptor.service';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatCommonModule } from '@angular/material/core';
+import { PlayerDialogComponent } from './components/player-dialog/player-dialog.component';
 
 @NgModule({
-	declarations: [AppComponent],
-	imports: [BrowserModule, BrowserAnimationsModule, MatCommonModule],
+	declarations: [AppComponent, PlayerDialogComponent],
+	imports: [BrowserModule, BrowserAnimationsModule, MatCommonModule, HttpClientModule, MatSnackBarModule, MatDialogModule, ReactiveFormsModule],
 	providers: [
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: HttpInterceptorService
+			useClass: HttpInterceptorService,
+			multi: true
 		}
 	],
 	bootstrap: [AppComponent]
