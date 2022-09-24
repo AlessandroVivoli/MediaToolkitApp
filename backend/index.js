@@ -28,7 +28,10 @@ app.get('/players', (req, res) => {
 	if(page === NaN || limit === NaN) res.sendStatus(400);
 
 	const query = connection.query(
-		'SELECT * FROM match_players LIMIT ?, ?',
+		```
+		SELECT * FROM match_players
+			ORDER BY setsWon DESC
+		LIMIT ?, ?```,
 		[0 + limit * page, limit + limit * page],
 		(error, results, fields) => {
 			if (error) {
