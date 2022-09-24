@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT;
 
 const mysql = require('mysql');
 const connection = mysql.createConnection({
@@ -358,8 +357,8 @@ function verifyTables() {
 	);
 }
 
-app.listen(PORT || 3000, () => {
-	console.log(`App listening on port ${PORT}.`);
+app.listen(3000, () => {
+	console.log(`App listening on port ${3000}.`);
 });
 
 process.on('exit', () => {
