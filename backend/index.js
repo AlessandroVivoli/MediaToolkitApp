@@ -25,13 +25,13 @@ app.get('/players', (req, res) => {
 	const page = Number.parseInt(req.query['page']);
 	const limit = Number.parseInt(req.query['limit']);
 
-	if(page === NaN || limit === NaN) res.sendStatus(400);
+	if (page === NaN || limit === NaN) res.sendStatus(400);
 
 	const query = connection.query(
-		```
+		`
 		SELECT * FROM match_players
 			ORDER BY setsWon DESC
-		LIMIT ?, ?```,
+		LIMIT ?, ?`,
 		[0 + limit * page, limit + limit * page],
 		(error, results, fields) => {
 			if (error) {
@@ -39,8 +39,7 @@ app.get('/players', (req, res) => {
 				throw error;
 			}
 
-			if (results.length > 0)
-				results.forEach((result) => players.push({ ...result }));
+			if (results.length > 0) results.forEach((result) => players.push({ ...result }));
 
 			res.status(200).send(players);
 		}
@@ -51,20 +50,15 @@ app.get('/players', (req, res) => {
 app.get('/players/:id', (req, res) => {
 	const playerId = req.params.id;
 
-	const query = connection.query(
-		'SELECT * FROM match_players WHERE id = ?',
-		playerId,
-		(error, results, felds) => {
-			if (error) {
-				res.sendStatus(500);
-				throw error;
-			}
-
-			if (results.length === 0)
-				res.status(404).send(`Player with id ${playerId} not found.`);
-			else res.status(200).send({ ...results[0] });
+	const query = connection.query('SELECT * FROM match_players WHERE id = ?', playerId, (error, results, felds) => {
+		if (error) {
+			res.sendStatus(500);
+			throw error;
 		}
-	);
+
+		if (results.length === 0) res.status(404).send(`Player with id ${playerId} not found.`);
+		else res.status(200).send({ ...results[0] });
+	});
 });
 
 // Add a player
@@ -73,18 +67,14 @@ app.post('/players', (req, res) => {
 
 	if (!(body.name && body.setsWon)) res.sendStatus(400);
 	else {
-		connection.query(
-			'INSERT INTO match_players SET ?',
-			body,
-			(error, results, fields) => {
-				if (error) {
-					res.sendStatus(500);
-					throw error;
-				}
-
-				res.sendStatus(200);
+		connection.query('INSERT INTO match_players SET ?', body, (error, results, fields) => {
+			if (error) {
+				res.sendStatus(500);
+				throw error;
 			}
-		);
+
+			res.sendStatus(200);
+		});
 	}
 });
 
@@ -96,18 +86,14 @@ app.put('/players/:id', (req, res) => {
 
 	if (!(body.name || body.setsWon)) res.sendStatus(400);
 	else {
-		connection.query(
-			'UPDATE match_players SET ? WHERE id = ?',
-			[body, id],
-			(error) => {
-				if (error) {
-					res.sendStatus(500);
-					throw error;
-				}
-
-				res.sendStatus(200);
+		connection.query('UPDATE match_players SET ? WHERE id = ?', [body, id], (error) => {
+			if (error) {
+				res.sendStatus(500);
+				throw error;
 			}
-		);
+
+			res.sendStatus(200);
+		});
 	}
 });
 
@@ -115,18 +101,14 @@ app.put('/players/:id', (req, res) => {
 app.delete('/players/:id', (req, res) => {
 	const { id } = req.params;
 
-	connection.query(
-		'DELETE FROM match_players WHERE id = ?',
-		[id],
-		(err, results, fields) => {
-			if (err) {
-				res.sendStatus(500);
-				throw err;
-			}
-
-			res.sendStatus(200);
+	connection.query('DELETE FROM match_players WHERE id = ?', [id], (err, results, fields) => {
+		if (err) {
+			res.sendStatus(500);
+			throw err;
 		}
-	);
+
+		res.sendStatus(200);
+	});
 });
 
 // Get matches
@@ -134,9 +116,9 @@ app.get('/matches', (req, res) => {
 	const page = Number.parseInt(req.query['page']);
 	const limit = Number.parseInt(req.query['limit']);
 
-	console.log(page, limit)
+	console.log(page, limit);
 
-	if(page === NaN || limit === NaN) res.sendStatus(400)
+	if (page === NaN || limit === NaN) res.sendStatus(400);
 
 	connection.query(
 		`
@@ -240,16 +222,12 @@ app.get('/matches/:id', (req, res) => {
 app.post('/matches', (req, res) => {
 	const { body } = req;
 
-	connection.query(
-		'INSERT INTO matches SET ?',
-		[{ playerWon: body.winner }],
-		(err) => {
-			if (err) {
-				res.sendStatus(500);
-				throw err;
-			}
+	connection.query('INSERT INTO matches SET ?', [{ playerWon: body.winner }], (err) => {
+		if (err) {
+			res.sendStatus(500);
+			throw err;
 		}
-	);
+	});
 
 	body.players.forEach((player) => {
 		player.points.forEach((point, index) => {
@@ -273,27 +251,19 @@ app.put('/matches/:id', (req, res) => {
 	const { body } = req;
 	const { id } = req.params;
 
-	connection.query(
-		'UPDATE matches SET ? WHERE id = ?',
-		[{ playerWon: body.winner }, id],
-		(err) => {
-			if (err) {
-				res.sendStatus(500);
-				throw err;
-			}
+	connection.query('UPDATE matches SET ? WHERE id = ?', [{ playerWon: body.winner }, id], (err) => {
+		if (err) {
+			res.sendStatus(500);
+			throw err;
 		}
-	);
+	});
 
-	connection.query(
-		'DELETE FROM player_matches WHERE matchId = ?',
-		id,
-		(err) => {
-			if (err) {
-				res.sendStatus(500);
-				throw err;
-			}
+	connection.query('DELETE FROM player_matches WHERE matchId = ?', id, (err) => {
+		if (err) {
+			res.sendStatus(500);
+			throw err;
 		}
-	);
+	});
 
 	body.players.forEach((player) => {
 		player.points.forEach((point, index) => {
