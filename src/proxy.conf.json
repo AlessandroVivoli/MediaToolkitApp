@@ -1,0 +1,30 @@
+{
+    "/matches": {
+        "target": "http://localhost:3000",
+        "secure": false,
+        "pathRewrite": {
+            "^/matches": ""
+        }
+    },
+    "/matches/*": {
+        "target": "http://localhost:3000",
+        "secure": false,
+        "pathRewrite": {
+            "^/matches/*": ""
+        }
+    },
+    "/players": {
+        "target": "http://localhost:3000",
+        "secure": false,
+        "pathRewrite": {
+            "^/players": ""
+        }
+    },
+    "/players/*": {
+        "target": "http://localhost:3000",
+        "secure": false,
+        "pathRewrite": {
+            "^/players/*": ""
+        }
+    }
+}
