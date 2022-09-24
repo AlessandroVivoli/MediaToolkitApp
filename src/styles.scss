@@ -1,10 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import "~bootstrap/scss/bootstrap.scss";
 
-* {
-    font-family: 'Press Start 2P';
+html,
+body {
+    height: 100%;
+}
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-@import "~bootstrap/scss/bootstrap.scss";
+.pagination-input {
+    position: relative;
+    display: block;
+    padding: var(--bs-pagination-padding-y);
+    font-size: var(--bs-pagination-font-size);
+    color: var(--bs-pagination-color);
+    text-decoration: none;
+    background-color: var(--bs-pagination-bg);
+    border: var(--bs-pagination-border-width) solid var(--bs-pagination-border-color);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+    outline: none;
+    border-left: 0;
+    width: 34px;
+
+    text-align: center;
+
+    &::-webkit-inner-spin-button {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    &::-webkit-outer-spin-button {
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+}
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
