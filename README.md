@@ -19,7 +19,6 @@ npm start
 
 ```Shell
 # .env.example
-PORT = 3000
 HOST = localhost
 USER = root
 PASS = SUPER_SECRET_PASS
