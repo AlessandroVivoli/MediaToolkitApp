@@ -11,46 +11,46 @@ export class HttpService {
 	constructor(private http: HttpClient) {}
 
 	public getAllPlayers(page: number, limit: number): Observable<PlayerModel[]> {
-		return this.http.get<PlayerModel[]>('/players', {
+		return this.http.get<PlayerModel[]>('/api/players', {
 			params: { page: page, limit: limit }
 		});
 	}
 
 	public getPlayerById(id: number): Observable<PlayerModel> {
-		return this.http.get<PlayerModel>(`/players/${id}`);
+		return this.http.get<PlayerModel>(`/api/players/${id}`);
 	}
 
 	public addPlayer(player: PlayerModel) {
-		this.http.post('/players', player);
+		this.http.post('/api/players', player);
 	}
 
 	public updatePlayer(player: PlayerModel) {
-		this.http.put(`/players/${player.id}`, player);
+		this.http.put(`/api/players/${player.id}`, player);
 	}
 
 	public deletePlayer(id: number) {
-		this.http.delete(`/players/${id}`);
+		this.http.delete(`/api/players/${id}`);
 	}
 
 	public getAllMatches(page: number, limit: number): Observable<MatchModel[]> {
-		return this.http.get<MatchModel[]>('/matches', {
+		return this.http.get<MatchModel[]>('/api/matches', {
 			params: { page: page, limit: limit }
 		});
 	}
 
 	public getMatchById(id: number): Observable<MatchModel> {
-		return this.http.get<MatchModel>(`/matches/${id}`);
+		return this.http.get<MatchModel>(`/api/matches/${id}`);
 	}
 
 	public addMatch(match: MatchModel) {
-		this.http.post('/matches', match);
+		this.http.post('/api/matches', match);
 	}
 
 	public updateMatch(match: MatchModel) {
-		this.http.put(`/matches/${match.id}`, match);
+		this.http.put(`/api/matches/${match.id}`, match);
 	}
 
 	public deleteMatch(id: number) {
-		this.http.delete(`/matches/${id}`);
+		this.http.delete(`/api/matches/${id}`);
 	}
 }
