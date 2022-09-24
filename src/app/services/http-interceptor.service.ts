@@ -1,14 +1,13 @@
 import {
-	HttpErrorResponse,
-	HttpEvent,
-	HttpEventType,
-	HttpHandler,
-	HttpInterceptor,
-	HttpRequest
+  HttpEvent,
+  HttpEventType,
+  HttpHandler,
+  HttpInterceptor,
+  HttpRequest
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, Observable, throwError, tap } from 'rxjs';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
+import { Observable, tap } from 'rxjs';
 
 @Injectable()
 export class HttpInterceptorService implements HttpInterceptor {
