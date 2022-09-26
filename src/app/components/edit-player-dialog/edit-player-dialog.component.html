@@ -1,0 +1,16 @@
+<h2 mat-dialog-title>Edit {{ data.name }}</h2>
+<form [formGroup]="form" (submit)="submit()">
+	<mat-dialog-content>
+		<div class="mb-3">
+			<label for="name" class="form-label">Name:</label>
+			<input type="text" autocomplete="off" class="form-control mb-3" name="name" id="name" formControlName="name" cdkFocusInitial/>
+			<div *ngIf="form.get('name').errors?.['required']" class="text-danger">Name is required!</div>
+			<div *ngIf="form.get('name').errors?.['invalidName']" class="text-danger">Name must be different!</div>
+			<div *ngIf="form.get('name').errors?.['maxlength']" class="text-danger">Name must be less than 12 characters long!</div>
+		</div>
+	</mat-dialog-content>
+	<mat-dialog-actions align="end">
+		<button mat-button mat-dialog-close>Cancel</button>
+		<button mat-button type="submit" color="primary">Save</button>
+	</mat-dialog-actions>
+</form>

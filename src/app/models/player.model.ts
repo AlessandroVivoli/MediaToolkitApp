@@ -1,5 +1,3 @@
-export interface PlayerModel {
-    id: number;
-    name: string;
-    setsWon: number;
+export class PlayerModel {
+	constructor(public id: number, public name: string, public setsWon: number) {}
 }

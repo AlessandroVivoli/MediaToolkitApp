@@ -1,0 +1,8 @@
+<h2>Add a new Player</h2>
+<form [formGroup]="form" id="addPlayerForm" class="d-flex justify-content-between align-items-center mb-5" (submit)="submit()">
+    <mat-form-field appearance="legacy">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name">
+    </mat-form-field>
+    <button mat-raised-button color="primary">Add</button>
+</form>

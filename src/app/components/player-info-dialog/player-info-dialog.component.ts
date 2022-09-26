@@ -4,10 +4,10 @@ import { PlayerModel } from 'src/app/models/player.model';
 
 @Component({
   selector: 'app-player-dialog',
-  templateUrl: './player-dialog.component.html',
-  styleUrls: ['./player-dialog.component.scss']
+  templateUrl: './player-info-dialog.component.html',
+  styleUrls: ['./player-info-dialog.component.scss']
 })
-export class PlayerDialogComponent implements OnInit {
+export class PlayerInfoDialogComponent implements OnInit {
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: PlayerModel) { }
 

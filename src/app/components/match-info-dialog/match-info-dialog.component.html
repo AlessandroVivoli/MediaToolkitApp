@@ -1,0 +1,23 @@
+<h1 mat-dialog-title>Match #{{ data.id }}</h1>
+<mat-dialog-content>
+	<table class="table table-striped table-responsive">
+		<thead>
+			<tr>
+				<th>SET:</th>
+				<th *ngFor="let i of [1, 2, 3, 4, 5]">{{ i }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr *ngFor="let player of data.players">
+				<th>{{ player.name }}</th>
+				<td *ngFor="let point of player.points">{{ point }}</td>
+			</tr>
+		</tbody>
+		<tfoot class="table-dark">
+            <tr>
+                <th>Winner</th>
+                <th colspan="5">{{data.winner}}</th>
+            </tr>
+        </tfoot>
+	</table>
+</mat-dialog-content>

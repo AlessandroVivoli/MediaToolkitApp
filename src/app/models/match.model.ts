@@ -1,7 +1,5 @@
-import { MatchPlayerModel } from "./match-player.model";
+import { MatchPlayerModel } from './match-player.model';
 
-export interface MatchModel {
-    id: number;
-    players: MatchPlayerModel[];
-    winner: string;
+export class MatchModel {
+	constructor(public id: number, public players: MatchPlayerModel[], public winner: string) {}
 }

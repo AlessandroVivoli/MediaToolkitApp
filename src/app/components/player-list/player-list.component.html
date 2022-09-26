@@ -1,0 +1,67 @@
+<table class="table caption-top table-striped table-hover user-select-none">
+	<caption>
+		List of players
+	</caption>
+	<thead class="table-dark">
+		<tr>
+			<th scope="col">#</th>
+			<th scope="col">Name</th>
+		</tr>
+	</thead>
+	<tbody>
+		<ng-container *ngIf="(players$ | async) as players; else elseBlock">
+			<ng-container *ngIf="players.length > 0; else elseBlock">
+				<tr class="pointer" *ngFor="let player of players" (contextmenu)="onRightClick($event, player)" (click)="onLeftClick(player)">
+					<th scope="row">{{ player.id }}</th>
+					<td>{{ player.name }}</td>
+				</tr>
+			</ng-container>
+		</ng-container>
+		<ng-template #elseBlock>
+			<tr>
+				<td colspan="2" class="text-muted">No players found</td>
+			</tr>
+		</ng-template>
+	</tbody>
+	<tfoot>
+		<td colspan="2">
+			<nav aria-label="Page navigation" class="position-relative">
+				<ul class="pagination justify-content-center">
+					<li class="page-item" [ngClass]="{ disabled: page.value === 0 }">
+						<a class="page-link" (click)="changePage(page.value - 1)">&lt;</a>
+					</li>
+					<li class="page-item">
+						<input type="number" class="pagination-input" maxlength="2" size="2" [formControl]="page" [attr.disabled]="true" />
+					</li>
+					<li class="page-item" [ngClass]="{ disabled: (page.value + 1) * limit.value >= playerSize }">
+						<a class="page-link" (click)="changePage(page.value + 1)">&gt;</a>
+					</li>
+				</ul>
+				<div class="input-group position-absolute limitBox">
+					<div class="input-group-prepend">
+						<span class="input-group-text">#</span>
+					</div>
+					<input
+						type="number"
+						class="pagination-input text-primary"
+						(keydown)="updateLimitValue($event)"
+						(keyup)="updateList($event)"
+						[formControl]="limit"
+					/>
+				</div>
+			</nav>
+		</td>
+	</tfoot>
+</table>
+<div style="visibility: hidden; position: fixed;" [style.left]="menuTopLeftPosition.x" [style.top]="menuTopLeftPosition.y" [mat-menu-trigger-for]="menu">
+	<mat-menu #menu>
+		<button mat-menu-item (click)="editPlayer()">
+			<mat-icon>build</mat-icon>
+			<span>Edit</span>
+		</button>
+		<button mat-menu-item (click)="deletePlayer()">
+			<mat-icon>delete_forever</mat-icon>
+			<span>Delete</span>
+		</button>
+	</mat-menu>
+</div>

@@ -1,0 +1,51 @@
+<h2>Add a new Match</h2>
+<form [formGroup]="form" id="addMatchForm" class="d-flex flex-column justify-content-start gap-5 align-items-center mb-3" (submit)="submit()">
+	<ng-container *ngIf="players$ | async as players">
+		<div class="row g-3 align-items center">
+			<div class="col-2">
+				<mat-form-field appearance="legacy">
+					<mat-label>Player 1</mat-label>
+					<mat-select [(value)]="form.controls['player1Selected'].setValue" required>
+						<mat-option value="{{ player }}" *ngFor="let player of players">{{ player.name }}</mat-option>
+					</mat-select>
+				</mat-form-field>
+			</div>
+			<div class="col-12 col-lg-10" formArrayName="player1Points">
+				<div class="row justify-content-center">
+					<div class="col-12 col-lg-2" *ngFor="let control of player1Points; index as i">
+						<mat-form-field appearance="outline" class="w-100">
+							<mat-label>Set {{ i + 1 }}</mat-label>
+							<input matInput type="number" [formControlName]="i" />
+						</mat-form-field>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-2">
+				<mat-form-field appearance="legacy">
+					<mat-label>Player 2</mat-label>
+					<mat-select [(value)]="form.controls['player2Selected'].setValue" required>
+						<mat-option value="{{ player }}" *ngFor="let player of players">{{ player.name }}</mat-option>
+					</mat-select>
+				</mat-form-field>
+			</div>
+			<div class="col-12 col-lg-10" formArrayName="player2Points">
+				<div class="row justify-content-center">
+					<div class="col-12 col-lg-2" *ngFor="let control of player2Points; index as i">
+						<mat-form-field appearance="outline" class="w-100">
+							<mat-label>Set {{ i + 1 }}</mat-label>
+							<input matInput type="number" [formControlName]="i" />
+						</mat-form-field>
+					</div>
+				</div>
+			</div>
+		</div>
+	</ng-container>
+	<div>
+		<div class="d-flex flex-row justify-content-between align-items-center w-100">
+			<h3 *ngIf="form.invalid" class="text-danger">You have entered an invalid match</h3>
+			<button mat-raised-button color="primary">Add</button>
+		</div>
+	</div>
+</form>

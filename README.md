@@ -1,4 +1,4 @@
-# MediatoolkitAssignment
+# TableTennisAnalytics
 
 ## To run this project you need to have MySQL Server installed and set up
 

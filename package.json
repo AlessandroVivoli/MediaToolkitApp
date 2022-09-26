@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "concurrently -k -n \"API,SERVE\" -c \"bgMagenta.bold,bgRed.bold\" \"npm run api\" \"wait-on tcp:3000 && npm run serve\"",
+    "start": "concurrently -k -n \"API,SERVE\" -c \"magenta.bold,red.bold\" \"npm run api\" \"wait-on tcp:3000 && npm run serve\"",
     "serve": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "api": "node backend/index.js"
+    "api": "nodemon --watch backend backend/index.js"
   },
   "private": true,
   "dependencies": {
@@ -27,6 +27,7 @@
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
     "mysql": "^2.18.1",
+    "nodemon": "^2.0.20",
     "request": "^2.88.2",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",

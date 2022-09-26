@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { MatchModel } from '../models/match.model';
 import { PlayerModel } from '../models/player.model';
 
@@ -21,15 +21,19 @@ export class HttpService {
 	}
 
 	public addPlayer(player: PlayerModel) {
-		this.http.post('/api/players', player);
+		return this.http.post<any>('/api/players', player);
 	}
 
-	public updatePlayer(player: PlayerModel) {
-		this.http.put(`/api/players/${player.id}`, player);
+	public updatePlayer(player: PlayerModel): Observable<PlayerModel> {
+		return this.http.put<PlayerModel>(`/api/players/${player.id}`, player).pipe(
+			map((value) => {
+				return new PlayerModel(value.id, value.name, value.setsWon);
+			})
+		);
 	}
 
-	public deletePlayer(id: number) {
-		this.http.delete(`/api/players/${id}`);
+	public deletePlayer(id: number): Observable<PlayerModel[]> {
+		return this.http.delete<PlayerModel[]>(`/api/players/${id}`);
 	}
 
 	public getAllMatches(page: number, limit: number): Observable<MatchModel[]> {
@@ -43,14 +47,14 @@ export class HttpService {
 	}
 
 	public addMatch(match: MatchModel) {
-		this.http.post('/api/matches', match);
+		return this.http.post<string>('/api/matches', match);
 	}
 
-	public updateMatch(match: MatchModel) {
-		this.http.put(`/api/matches/${match.id}`, match);
+	public updateMatch(match: MatchModel): Observable<MatchModel> {
+		return this.http.put<MatchModel>(`/api/matches/${match.id}`, match);
 	}
 
 	public deleteMatch(id: number) {
-		this.http.delete(`/api/matches/${id}`);
+		return this.http.delete<any>(`/api/matches/${id}`);
 	}
 }
