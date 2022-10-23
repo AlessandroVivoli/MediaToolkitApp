@@ -25,7 +25,7 @@ module.exports = function (config) {
       suppressAll: true // removes the duplicated traces
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/mediatoolkit-assignment'),
+      dir: require('path').join(__dirname, './coverage/fullstack-app-demo'),
       subdir: '.',
       reporters: [
         { type: 'html' },

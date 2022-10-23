@@ -1,26 +1,26 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { Observable, Subscription, BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { PlayerModel } from 'src/app/models/player.model';
 import { DataManagerService } from 'src/app/services/data-manager.service';
 import { HttpService } from 'src/app/services/http.service';
 import { DeletePlayerDialogComponent } from '../delete-player-dialog/delete-player-dialog.component';
 import { EditPlayerDialogComponent } from '../edit-player-dialog/edit-player-dialog.component';
-import { PlayerInfoDialogComponent as PlayerInfoDialogComponent } from '../player-info-dialog/player-info-dialog.component';
+import { PlayerInfoDialogComponent } from '../player-info-dialog/player-info-dialog.component';
 
 @Component({
 	selector: 'app-player-list',
 	templateUrl: './player-list.component.html',
 	styleUrls: ['./player-list.component.scss'],
-	changeDetection: ChangeDetectionStrategy.Default
+	changeDetection: ChangeDetectionStrategy.Default,
 })
 export class PlayerListComponent implements OnInit, OnDestroy {
 	@ViewChild(MatMenuTrigger, { static: true })
 	private matMenuTrigger: MatMenuTrigger;
 
-	@Output() menu: EventEmitter<MatMenuTrigger>;
+	@Output() menu: BehaviorSubject<MatMenuTrigger>;
 
 	playerSize: number;
 	players$: Observable<PlayerModel[]>;
@@ -39,7 +39,7 @@ export class PlayerListComponent implements OnInit, OnDestroy {
 		this.page = new FormControl(0);
 		this.limit = new FormControl(25);
 
-		this.menu = new EventEmitter();
+		this.menu = new BehaviorSubject(this.matMenuTrigger);
 	}
 
 	ngOnInit(): void {
@@ -69,11 +69,13 @@ export class PlayerListComponent implements OnInit, OnDestroy {
 			this.dataManager.onMatchUpdate.subscribe(() => {
 				this.players$ = this.httpService.getAllPlayers(this.page.value, this.limit.value);
 			})
-		)
+		);
 
-		this.#sub.add(this.matMenuTrigger.menuOpened.subscribe(() => {
-			this.menu.emit(this.matMenuTrigger);
-		}))
+		this.#sub.add(
+			this.matMenuTrigger.menuOpened.subscribe(() => {
+				this.menu.next(this.matMenuTrigger);
+			})
+		);
 	}
 
 	ngOnDestroy(): void {
@@ -123,7 +125,7 @@ export class PlayerListComponent implements OnInit, OnDestroy {
 
 	onLeftClick(playerModel: PlayerModel) {
 		this.dialog.open(PlayerInfoDialogComponent, {
-			data: playerModel
+			data: playerModel,
 		});
 	}
 
@@ -140,14 +142,14 @@ export class PlayerListComponent implements OnInit, OnDestroy {
 
 	editPlayer() {
 		this.dialog.open(EditPlayerDialogComponent, {
-			data: this.selectedPlayer
+			data: this.selectedPlayer,
 		});
 	}
 
 	deletePlayer() {
 		this.dialog
 			.open(DeletePlayerDialogComponent, {
-				data: this.selectedPlayer
+				data: this.selectedPlayer,
 			})
 			.afterClosed()
 			.subscribe((answer) => {

@@ -1,8 +1,8 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { Observable, of, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { MatchModel } from 'src/app/models/match.model';
 import { DataManagerService } from 'src/app/services/data-manager.service';
 import { HttpService } from 'src/app/services/http.service';
@@ -13,12 +13,12 @@ import { MatchInfoDialogComponent } from '../match-info-dialog/match-info-dialog
 @Component({
 	selector: 'app-match-list',
 	templateUrl: './match-list.component.html',
-	styleUrls: ['./match-list.component.scss']
+	styleUrls: ['./match-list.component.scss'],
 })
 export class MatchListComponent implements OnInit, OnDestroy {
 	@ViewChild(MatMenuTrigger, { static: true }) matMenuTrigger: MatMenuTrigger;
 
-	@Output() menu: EventEmitter<MatMenuTrigger>;
+	@Output() menu: BehaviorSubject<MatMenuTrigger>;
 
 	matches$: Observable<MatchModel[]>;
 	menuTopLeftPosition = { x: '0', y: '0' };
@@ -39,7 +39,7 @@ export class MatchListComponent implements OnInit, OnDestroy {
 		this.page = new FormControl(0);
 		this.limit = new FormControl(25);
 
-		this.menu = new EventEmitter();
+		this.menu = new BehaviorSubject(this.matMenuTrigger);
 	}
 
 	ngOnInit(): void {
@@ -54,7 +54,7 @@ export class MatchListComponent implements OnInit, OnDestroy {
 
 		this.#sub.add(
 			this.matMenuTrigger.menuOpened.subscribe(() => {
-				this.menu.emit(this.matMenuTrigger);
+				this.menu.next(this.matMenuTrigger);
 			})
 		);
 
@@ -90,7 +90,7 @@ export class MatchListComponent implements OnInit, OnDestroy {
 	onLeftClick(match: MatchModel) {
 		this.dialog.open(MatchInfoDialogComponent, {
 			data: match,
-			minWidth: 720
+			minWidth: 720,
 		});
 	}
 
@@ -139,7 +139,7 @@ export class MatchListComponent implements OnInit, OnDestroy {
 		this.dialog.open(EditMatchDialogComponent, {
 			data: this.selectedMatch,
 			minWidth: 720,
-			maxWidth: 720
+			maxWidth: 720,
 		});
 	}
 
