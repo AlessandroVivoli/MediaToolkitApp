@@ -47,7 +47,7 @@ export class HttpService {
 	}
 
 	public addMatch(match: MatchModel) {
-		return this.http.post<string>('/api/matches', match);
+		return this.http.post<MatchModel>('/api/matches', match);
 	}
 
 	public updateMatch(match: MatchModel): Observable<MatchModel> {

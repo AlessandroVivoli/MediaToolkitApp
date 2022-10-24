@@ -254,6 +254,9 @@ app.post<{}, any, Match>('/matches', (req, res) => {
 
   insertMany(body.players);
 
+  updatePlayers();
+  updateWinners();
+
   const stmt = db.prepare(
     `SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches
 			INNER JOIN player_matches ON player_matches.matchId = matches.id
@@ -294,9 +297,6 @@ app.post<{}, any, Match>('/matches', (req, res) => {
   console.log(resultingMatch);
 
   res.status(200).send(resultingMatch[0]);
-
-  updatePlayers();
-  updateWinners();
 });
 
 // Update match info

@@ -183,6 +183,8 @@ app.post('/matches', function (req, res) {
         }
     });
     insertMany(body.players);
+    updatePlayers();
+    updateWinners();
     var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
     var rows = stmt.all(id);
     var result;
@@ -205,8 +207,6 @@ app.post('/matches', function (req, res) {
         });
     console.log(resultingMatch);
     res.status(200).send(resultingMatch[0]);
-    updatePlayers();
-    updateWinners();
 });
 // Update match info
 app.put('/matches/:id', function (req, res) {
