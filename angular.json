@@ -3,7 +3,7 @@
 	"version": 1,
 	"newProjectRoot": "projects",
 	"projects": {
-		"mediatoolkit-assignment": {
+		"fullstack-angular-demo": {
 			"projectType": "application",
 			"schematics": {
 				"@schematics/angular:component": {
@@ -17,7 +17,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:browser",
 					"options": {
-						"outputPath": "dist/fullstack-app-demo",
+						"outputPath": "dist/fullstack-angular-demo",
 						"index": "src/index.html",
 						"main": "src/main.ts",
 						"polyfills": "src/polyfills.ts",
@@ -64,10 +64,10 @@
 					"builder": "@angular-devkit/build-angular:dev-server",
 					"configurations": {
 						"production": {
-							"browserTarget": "mediatoolkit-assignment:build:production"
+							"browserTarget": "fullstack-angular-demo:build:production"
 						},
 						"development": {
-							"browserTarget": "mediatoolkit-assignment:build:development"
+							"browserTarget": "fullstack-angular-demo:build:development"
 						}
 					},
 					"defaultConfiguration": "development",
@@ -78,7 +78,7 @@
 				"extract-i18n": {
 					"builder": "@angular-devkit/build-angular:extract-i18n",
 					"options": {
-						"browserTarget": "mediatoolkit-assignment:build"
+						"browserTarget": "fullstack-angular-demo:build"
 					}
 				},
 				"test": {

@@ -42,6 +42,7 @@ testem.log
 Thumbs.db
 *.sqlite
 *.sql
+!backend/db-schematics/*.sql
 
 # DotEnv
 .env

@@ -26,7 +26,9 @@ var Database = require("better-sqlite3");
 var fs = require("fs");
 dotenv.config();
 var app = express();
-var db = new Database(process.env['DB'] + '.sqlite', { verbose: console.log });
+var db = new Database(process.env['DB'] + '.sqlite', {
+    verbose: console.log
+});
 verifyTables();
 app.use(express.json());
 // Get all match players
@@ -57,7 +59,7 @@ app.post('/players', function (req, res) {
     var body = req.body;
     console.log(body);
     delete body.id;
-    if (!body.name || !body.setsWon) {
+    if (!body.name || (!body.setsWon && body.setsWon != 0)) {
         res.status(400).send('Request has no body');
         return console.error('Request has no body');
     }
@@ -91,7 +93,9 @@ app["delete"]('/players/:id', function (req, res) {
         throw new Error('Id is not a number!');
     }
     db.prepare('DELETE FROM match_players WHERE id = ?').run(id);
-    var rows = db.prepare('SELECT * FROM match_players ORDER BY setsWon DESC').all();
+    var rows = db
+        .prepare('SELECT * FROM match_players ORDER BY setsWon DESC')
+        .all();
     res.status(200).send(rows);
 });
 // Get matches
@@ -102,7 +106,7 @@ app.get('/matches', function (req, res) {
         res.status(400).send('One of the parameters is not a number');
         return console.error('One of the parameters is not a number');
     }
-    var stmt = db.prepare("SELECT matches.id as matchId, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches\n    INNER JOIN player_matches ON player_matches.matchId = matches.id\n    INNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n    LEFT JOIN match_players AS p ON p.id = playerWon\n  GROUP BY mp.name\n  ORDER BY matches.id, mp.name, setNum ASC\n  LIMIT ?, ?");
+    var stmt = db.prepare("SELECT matches.id as matchId, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tGROUP BY mp.name\n\t\tORDER BY matches.id, mp.name, setNum ASC\n\t\tLIMIT ?, ?");
     var rows = stmt.all(page * limit * 2, limit * 2);
     console.log('Rows:', rows);
     var result;
@@ -112,18 +116,19 @@ app.get('/matches', function (req, res) {
             var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
             return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
                 players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
-                    { id: playerId, name: name, points: JSON.parse(playerPoints) }
+                    { id: playerId, name: name, points: JSON.parse(playerPoints) },
                 ], false),
                 winner: winner
             }, _a));
         });
     }
-    var resultingObject = [];
-    Object.keys(result).forEach(function (key) {
-        resultingObject.push(__assign({ id: key }, result[key]));
-    });
-    console.log(resultingObject);
-    res.status(200).send(resultingObject);
+    var resultMatch = [];
+    if (rows.length > 0)
+        Object.keys(result).forEach(function (key) {
+            resultMatch.push(__assign({ id: key }, result[key]));
+        });
+    console.log(resultMatch);
+    res.status(200).send(resultMatch);
 });
 // Get match by id
 app.get('/matches/:id', function (req, res) {
@@ -134,22 +139,26 @@ app.get('/matches/:id', function (req, res) {
     }
     var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches\n        INNER JOIN player_matches ON player_matches.matchId = matches.id\n        INNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n        LEFT JOIN match_players AS p ON p.id = playerWon\n    WHERE matchId = ?\n        GROUP BY mp.name\n        ORDER BY matchId, mp.name, setNum ASC;");
     var rows = stmt.all(id);
-    var result = rows.reduce(function (acc, post) {
-        var _a;
-        var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
-        return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
-            players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
-                { id: playerId, name: name, points: JSON.parse(playerPoints) }
-            ], false),
-            winner: winner
-        }, _a));
-    });
-    var resultingObject = [];
-    Object.keys(result).forEach(function (key) {
-        resultingObject.push(__assign({ id: key }, result[key]));
-    });
-    console.log(resultingObject);
-    res.status(200).send(resultingObject[0]);
+    var result;
+    if (rows.length > 0) {
+        result = rows.reduce(function (acc, post) {
+            var _a;
+            var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
+            return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
+                players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
+                    { id: playerId, name: name, points: JSON.parse(playerPoints) },
+                ], false),
+                winner: winner
+            }, _a));
+        });
+    }
+    var resultingMatch = [];
+    if (rows.length > 0)
+        Object.keys(result).forEach(function (key) {
+            resultingMatch.push(__assign({ id: key }, result[key]));
+        });
+    console.log(resultingMatch);
+    res.status(200).send(resultingMatch[0]);
 });
 // Add match info
 app.post('/matches', function (req, res) {
@@ -176,22 +185,26 @@ app.post('/matches', function (req, res) {
     insertMany(body.players);
     var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
     var rows = stmt.all(id);
-    var result = rows.reduce(function (acc, post) {
-        var _a;
-        var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
-        return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
-            players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
-                { id: playerId, name: name, points: JSON.parse(playerPoints) }
-            ], false),
-            winner: winner
-        }, _a));
-    });
-    var resultingObject = [];
-    Object.keys(result).forEach(function (key) {
-        resultingObject.push(__assign({ id: key }, result[key]));
-    });
-    console.log(resultingObject);
-    res.status(200).send(resultingObject[0]);
+    var result;
+    if (rows.length > 0) {
+        result = rows.reduce(function (acc, post) {
+            var _a;
+            var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
+            return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
+                players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
+                    { id: playerId, name: name, points: JSON.parse(playerPoints) },
+                ], false),
+                winner: winner
+            }, _a));
+        });
+    }
+    var resultingMatch = [];
+    if (rows.length > 0)
+        Object.keys(result).forEach(function (key) {
+            resultingMatch.push(__assign({ id: key }, result[key]));
+        });
+    console.log(resultingMatch);
+    res.status(200).send(resultingMatch[0]);
     updatePlayers();
     updateWinners();
 });
@@ -226,22 +239,26 @@ app.put('/matches/:id', function (req, res) {
     insertMany(body.players);
     var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
     var rows = stmt.all(id);
-    var result = rows.reduce(function (acc, post) {
-        var _a;
-        var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
-        return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
-            players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
-                { id: playerId, name: name, points: JSON.parse(playerPoints) }
-            ], false),
-            winner: winner
-        }, _a));
-    });
-    var resultingObject = [];
-    Object.keys(result).forEach(function (key) {
-        resultingObject.push(__assign({ id: key }, result[key]));
-    });
-    console.log(resultingObject);
-    res.status(200).send(resultingObject[0]);
+    var result;
+    if (rows.length > 0) {
+        result = rows.reduce(function (acc, post) {
+            var _a;
+            var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
+            return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
+                players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
+                    { id: playerId, name: name, points: JSON.parse(playerPoints) },
+                ], false),
+                winner: winner
+            }, _a));
+        });
+    }
+    var resultingMatch = [];
+    if (rows.length > 0)
+        Object.keys(result).forEach(function (key) {
+            resultingMatch.push(__assign({ id: key }, result[key]));
+        });
+    console.log(resultingMatch);
+    res.status(200).send(resultingMatch[0]);
     updatePlayers();
     updateWinners();
 });
@@ -254,22 +271,22 @@ app["delete"]('/matches/:id', function (req, res) {
     }
     var stmt = db.prepare("DELETE FROM matches WHERE ID = $id");
     stmt.run({ id: id });
-    var selectSQL = fs.readFileSync('./backend/db-schematics/select-all-matches.sql', 'utf-8');
+    var selectSQL = fs.readFileSync('./backend/db-scripts/select-all-matches.sql', 'utf-8');
     var result = db.prepare(selectSQL).all();
     res.status(200).send(result);
     updatePlayers();
     updateWinners();
 });
 function updatePlayers() {
-    var updateSQL = fs.readFileSync('./backend/db-schematics/update-players.sql', 'utf-8');
+    var updateSQL = fs.readFileSync('./backend/db-scripts/update-players.sql', 'utf-8');
     db.exec(updateSQL);
 }
 function updateWinners() {
-    var updateSQL = fs.readFileSync('./backend/db-schematics/update-winners.sql', 'utf-8');
+    var updateSQL = fs.readFileSync('./backend/db-scripts/update-winners.sql', 'utf-8');
     db.exec(updateSQL);
 }
 function verifyTables() {
-    var verifySQL = fs.readFileSync('./backend/db-schematics/verify-tables.sql', 'utf-8');
+    var verifySQL = fs.readFileSync('./backend/db-scripts/verify-tables.sql', 'utf-8');
     db.exec(verifySQL);
 }
 app.listen(3000, function () {

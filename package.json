@@ -1,5 +1,5 @@
 {
-  "name": "fullstack-app-demo",
+  "name": "fullstack-angular-demo",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -8,8 +8,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "compile": "tsc backend/index.ts && node backend/index.js",
-    "api": "nodemon --watch backend backend/index.ts --exec \"npm run compile\""
+    "api": "tsc-watch backend/index.ts --onSuccess \"node backend/index.js\""
   },
   "private": true,
   "dependencies": {
