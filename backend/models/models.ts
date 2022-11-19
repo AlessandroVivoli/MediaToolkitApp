@@ -16,8 +16,9 @@ export type MatchPlayer = {
 	points: number[];
 };
 
-export type RawMatch = {
-	[matchId: number]: {
+export type MatchInfo = {
+	[matchInfoId: number]: {
+    matchId: number;
 		players: MatchPlayer[];
 		winner: string;
 	};

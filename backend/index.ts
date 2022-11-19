@@ -3,7 +3,7 @@ import * as express from 'express';
 import * as Database from 'better-sqlite3';
 import * as fs from 'fs';
 
-import { Player, Match, MatchPlayer, RawMatch } from './models/models';
+import { Player, Match, MatchPlayer, MatchInfo } from './models/models';
 
 dotenv.config();
 const app = express();
@@ -26,7 +26,7 @@ app.get('/players', (req, res) => {
   }
 
   const stmt = db.prepare(
-    'SELECT * FROM match_players ORDER BY setsWon DESC LIMIT ?, ?'
+    'SELECT * FROM players ORDER BY setsWon DESC LIMIT ?, ?'
   );
   const rows = stmt.all(page * limit, limit);
 
@@ -42,7 +42,7 @@ app.get('/players/:id', (req, res) => {
     return console.error('ID is not a number');
   }
 
-  const stmt = db.prepare('SELECT * FROM match_players WHERE id = ?');
+  const stmt = db.prepare('SELECT * FROM players WHERE id = ?');
   const row = stmt.get();
 
   res.status(200).send(row);
@@ -64,7 +64,7 @@ app.post<{}, any, { id: number; name: string; setsWon: number }>(
     }
 
     const id = db
-      .prepare('INSERT INTO match_players (name, setsWon) VALUES (?, ?)')
+      .prepare('INSERT INTO players (name, setsWon) VALUES (?, ?)')
       .run(body.name, body.setsWon).lastInsertRowid;
 
     res.status(200).send({ id: id, ...body });
@@ -87,13 +87,13 @@ app.put<{ id: string }, any, Player>('/players/:id', (req, res) => {
     res.type('text').status(400).send('Request has no body');
   else {
     db.prepare(
-      'UPDATE match_players SET name = $name, setsWon = $setsWon WHERE id = $id'
+      'UPDATE players SET name = $name, setsWon = $setsWon WHERE id = $id'
     ).run({
       id: id,
       ...body,
     });
 
-    const stmt = db.prepare('SELECT * FROM match_players WHERE id = ?');
+    const stmt = db.prepare('SELECT * FROM players WHERE id = ?');
     const rows = stmt.all(id);
 
     res.status(200).send(rows);
@@ -109,10 +109,8 @@ app.delete('/players/:id', (req, res) => {
     throw new Error('Id is not a number!');
   }
 
-  db.prepare('DELETE FROM match_players WHERE id = ?').run(id);
-  const rows = db
-    .prepare('SELECT * FROM match_players ORDER BY setsWon DESC')
-    .all();
+  db.prepare('DELETE FROM players WHERE id = ?').run(id);
+  const rows = db.prepare('SELECT * FROM players ORDER BY setsWon DESC').all();
 
   res.status(200).send(rows);
 });
@@ -127,35 +125,38 @@ app.get('/matches', (req, res) => {
     return console.error('One of the parameters is not a number');
   }
 
-  const stmt = db.prepare(
-    `SELECT matches.id as matchId, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches
-			INNER JOIN player_matches ON player_matches.matchId = matches.id
-			INNER JOIN match_players AS mp ON mp.id = player_matches.playerId
-			LEFT JOIN match_players AS p ON p.id = playerWon
-		GROUP BY mp.name
-		ORDER BY matches.id, mp.name, setNum ASC
-		LIMIT ?, ?`
-  );
+  const stmt = db.prepare(`
+    SELECT matchInfoId, matches.id AS matchId, p.name AS winner, mp.id AS playerId, mp.name, JSON_ARRAY(set1, set2, set3, set4, set5) AS points from match_rounds
+      INNER JOIN match_info ON match_info.id = matchInfoId
+      INNER JOIN matches ON matches.id = match_info.matchId
+      INNER JOIN players AS mp on mp.id = match_rounds.playerId
+      LEFT JOIN players AS p ON p.id = playerwon
+    GROUP BY matchInfoId, playerId
+    ORDER BY playerId ASC
+      LIMIT ?, ?;
+  `);
 
   const rows = stmt.all(page * limit * 2, limit * 2);
 
   console.log('Rows:', rows);
 
-  let result: RawMatch;
+  let result: MatchInfo;
 
   if (rows.length > 0) {
     result = rows.reduce((acc, post) => {
-      const { matchId, playerId, winner, name, playerPoints } = post;
+      const { matchInfoId, matchId, playerId, winner, name, playerPoints } =
+        post;
       return {
         ...acc,
-        [matchId]: {
+        [matchInfoId]: {
+          matchId: matchId,
           players: [
             ...(acc[matchId].players || []),
             { id: playerId, name: name, points: JSON.parse(playerPoints) },
           ],
           winner: winner,
         },
-      } as RawMatch;
+      } as MatchInfo;
     });
   }
 
@@ -180,26 +181,29 @@ app.get('/matches/:id', (req, res) => {
     return console.error('Id is not a number!');
   }
 
-  const stmt = db.prepare(
-    `SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches
-        INNER JOIN player_matches ON player_matches.matchId = matches.id
-        INNER JOIN match_players AS mp ON mp.id = player_matches.playerId
-        LEFT JOIN match_players AS p ON p.id = playerWon
+  const stmt = db.prepare(`
+    SELECT matchInfoId, matches.id AS matchId, p.name AS winner, mp.id AS playerId, mp.name, JSON_ARRAY(set1, set2, set3, set4, set5) AS playerPoints from match_rounds
+      INNER JOIN match_info ON match_info.id = matchInfoId
+        INNER JOIN matches ON matches.id = match_info.matchId
+        INNER JOIN players AS mp on mp.id = match_rounds.playerId
+        LEFT JOIN players AS p ON p.id = playerwon
     WHERE matchId = ?
-        GROUP BY mp.name
-        ORDER BY matchId, mp.name, setNum ASC;`
-  );
+      GROUP BY matchInfoId, playerId
+      ORDER BY playerId ASC;
+  `);
 
   const rows = stmt.all(id);
 
-  let result: RawMatch;
+  let result: MatchInfo;
 
   if (rows.length > 0) {
     result = rows.reduce((acc, post) => {
-      const { matchId, playerId, winner, name, playerPoints } = post;
+      const { matchInfoId, matchId, playerId, winner, name, playerPoints } =
+        post;
       return {
         ...acc,
-        [matchId]: {
+        [matchInfoId]: {
+          matchId: matchId,
           players: [
             ...(acc[matchId].players || []),
             { id: playerId, name: name, points: JSON.parse(playerPoints) },
@@ -260,8 +264,8 @@ app.post<{}, any, Match>('/matches', (req, res) => {
   const stmt = db.prepare(
     `SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches
 			INNER JOIN player_matches ON player_matches.matchId = matches.id
-			INNER JOIN match_players AS mp ON mp.id = player_matches.playerId
-			LEFT JOIN match_players AS p ON p.id = playerWon
+			INNER JOIN players AS mp ON mp.id = player_matches.playerId
+			LEFT JOIN players AS p ON p.id = playerWon
 		WHERE matchId = ?
 			GROUP BY mp.name
 			ORDER BY matchId, mp.name, setNum ASC`
@@ -269,7 +273,7 @@ app.post<{}, any, Match>('/matches', (req, res) => {
 
   const rows = stmt.all(id);
 
-  let result: RawMatch;
+  let result: MatchInfo;
 
   if (rows.length > 0) {
     result = rows.reduce((acc, post) => {
@@ -339,8 +343,8 @@ app.put<{ id: string }, any, Match>('/matches/:id', (req, res) => {
   const stmt = db.prepare(
     `SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches
 			INNER JOIN player_matches ON player_matches.matchId = matches.id
-			INNER JOIN match_players AS mp ON mp.id = player_matches.playerId
-			LEFT JOIN match_players AS p ON p.id = playerWon
+			INNER JOIN players AS mp ON mp.id = player_matches.playerId
+			LEFT JOIN players AS p ON p.id = playerWon
 		WHERE matchId = ?
 			GROUP BY mp.name
 			ORDER BY matchId, mp.name, setNum ASC`
@@ -348,7 +352,7 @@ app.put<{ id: string }, any, Match>('/matches/:id', (req, res) => {
 
   const rows = stmt.all(id);
 
-  let result: RawMatch;
+  let result: MatchInfo;
 
   if (rows.length > 0) {
     result = rows.reduce((acc, post) => {

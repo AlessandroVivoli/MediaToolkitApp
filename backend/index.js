@@ -39,7 +39,7 @@ app.get('/players', function (req, res) {
         res.status(400).send('One of the parameters is not a number');
         return console.error('One of the parameters is not a number');
     }
-    var stmt = db.prepare('SELECT * FROM match_players ORDER BY setsWon DESC LIMIT ?, ?');
+    var stmt = db.prepare('SELECT * FROM players ORDER BY setsWon DESC LIMIT ?, ?');
     var rows = stmt.all(page * limit, limit);
     res.status(200).send(rows);
 });
@@ -50,7 +50,7 @@ app.get('/players/:id', function (req, res) {
         res.status(400).send('ID is not a number');
         return console.error('ID is not a number');
     }
-    var stmt = db.prepare('SELECT * FROM match_players WHERE id = ?');
+    var stmt = db.prepare('SELECT * FROM players WHERE id = ?');
     var row = stmt.get();
     res.status(200).send(row);
 });
@@ -64,7 +64,7 @@ app.post('/players', function (req, res) {
         return console.error('Request has no body');
     }
     var id = db
-        .prepare('INSERT INTO match_players (name, setsWon) VALUES (?, ?)')
+        .prepare('INSERT INTO players (name, setsWon) VALUES (?, ?)')
         .run(body.name, body.setsWon).lastInsertRowid;
     res.status(200).send(__assign({ id: id }, body));
 });
@@ -79,8 +79,8 @@ app.put('/players/:id', function (req, res) {
     else if (!(body.name || body.setsWon))
         res.type('text').status(400).send('Request has no body');
     else {
-        db.prepare('UPDATE match_players SET name = $name, setsWon = $setsWon WHERE id = $id').run(__assign({ id: id }, body));
-        var stmt = db.prepare('SELECT * FROM match_players WHERE id = ?');
+        db.prepare('UPDATE players SET name = $name, setsWon = $setsWon WHERE id = $id').run(__assign({ id: id }, body));
+        var stmt = db.prepare('SELECT * FROM players WHERE id = ?');
         var rows = stmt.all(id);
         res.status(200).send(rows);
     }
@@ -92,10 +92,8 @@ app["delete"]('/players/:id', function (req, res) {
         res.status(400).send('Id is not a number');
         throw new Error('Id is not a number!');
     }
-    db.prepare('DELETE FROM match_players WHERE id = ?').run(id);
-    var rows = db
-        .prepare('SELECT * FROM match_players ORDER BY setsWon DESC')
-        .all();
+    db.prepare('DELETE FROM players WHERE id = ?').run(id);
+    var rows = db.prepare('SELECT * FROM players ORDER BY setsWon DESC').all();
     res.status(200).send(rows);
 });
 // Get matches
@@ -106,15 +104,16 @@ app.get('/matches', function (req, res) {
         res.status(400).send('One of the parameters is not a number');
         return console.error('One of the parameters is not a number');
     }
-    var stmt = db.prepare("SELECT matches.id as matchId, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tGROUP BY mp.name\n\t\tORDER BY matches.id, mp.name, setNum ASC\n\t\tLIMIT ?, ?");
+    var stmt = db.prepare("\n    SELECT matchInfoId, matches.id AS matchId, p.name AS winner, mp.id AS playerId, mp.name, JSON_ARRAY(set1, set2, set3, set4, set5) AS points from match_rounds\n      INNER JOIN match_info ON match_info.id = matchInfoId\n      INNER JOIN matches ON matches.id = match_info.matchId\n      INNER JOIN players AS mp on mp.id = match_rounds.playerId\n      LEFT JOIN players AS p ON p.id = playerwon\n    GROUP BY matchInfoId, playerId\n    ORDER BY playerId ASC\n      LIMIT ?, ?;\n  ");
     var rows = stmt.all(page * limit * 2, limit * 2);
     console.log('Rows:', rows);
     var result;
     if (rows.length > 0) {
         result = rows.reduce(function (acc, post) {
             var _a;
-            var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
-            return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
+            var matchInfoId = post.matchInfoId, matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
+            return __assign(__assign({}, acc), (_a = {}, _a[matchInfoId] = {
+                matchId: matchId,
                 players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
                     { id: playerId, name: name, points: JSON.parse(playerPoints) },
                 ], false),
@@ -137,14 +136,15 @@ app.get('/matches/:id', function (req, res) {
         res.status(400).send('ID is not a number!');
         return console.error('Id is not a number!');
     }
-    var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS points FROM matches\n        INNER JOIN player_matches ON player_matches.matchId = matches.id\n        INNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n        LEFT JOIN match_players AS p ON p.id = playerWon\n    WHERE matchId = ?\n        GROUP BY mp.name\n        ORDER BY matchId, mp.name, setNum ASC;");
+    var stmt = db.prepare("\n    SELECT matchInfoId, matches.id AS matchId, p.name AS winner, mp.id AS playerId, mp.name, JSON_ARRAY(set1, set2, set3, set4, set5) AS playerPoints from match_rounds\n      INNER JOIN match_info ON match_info.id = matchInfoId\n        INNER JOIN matches ON matches.id = match_info.matchId\n        INNER JOIN players AS mp on mp.id = match_rounds.playerId\n        LEFT JOIN players AS p ON p.id = playerwon\n    WHERE matchId = ?\n      GROUP BY matchInfoId, playerId\n      ORDER BY playerId ASC;\n  ");
     var rows = stmt.all(id);
     var result;
     if (rows.length > 0) {
         result = rows.reduce(function (acc, post) {
             var _a;
-            var matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
-            return __assign(__assign({}, acc), (_a = {}, _a[matchId] = {
+            var matchInfoId = post.matchInfoId, matchId = post.matchId, playerId = post.playerId, winner = post.winner, name = post.name, playerPoints = post.playerPoints;
+            return __assign(__assign({}, acc), (_a = {}, _a[matchInfoId] = {
+                matchId: matchId,
                 players: __spreadArray(__spreadArray([], (acc[matchId].players || []), true), [
                     { id: playerId, name: name, points: JSON.parse(playerPoints) },
                 ], false),
@@ -185,7 +185,7 @@ app.post('/matches', function (req, res) {
     insertMany(body.players);
     updatePlayers();
     updateWinners();
-    var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
+    var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
     var rows = stmt.all(id);
     var result;
     if (rows.length > 0) {
@@ -237,7 +237,7 @@ app.put('/matches/:id', function (req, res) {
         }
     });
     insertMany(body.players);
-    var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN match_players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN match_players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
+    var stmt = db.prepare("SELECT matches.id as matchId, setNum, p.name AS winner, mp.id AS playerId, mp.name, GROUP_CONCAT(points) AS playerPoints FROM matches\n\t\t\tINNER JOIN player_matches ON player_matches.matchId = matches.id\n\t\t\tINNER JOIN players AS mp ON mp.id = player_matches.playerId\n\t\t\tLEFT JOIN players AS p ON p.id = playerWon\n\t\tWHERE matchId = ?\n\t\t\tGROUP BY mp.name\n\t\t\tORDER BY matchId, mp.name, setNum ASC");
     var rows = stmt.all(id);
     var result;
     if (rows.length > 0) {
